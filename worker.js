@@ -4,20 +4,24 @@ addEventListener('fetch', event => {
 
 /*
 
-Image: http://flip.ocdndns.com/1234/567/img/homepage-hero.jpg?user_id=123
+https://cdn.optimizely.com/datafiles/WkSJQ58P859qzVvPH6bYaF.json
+
+Image: http://flip.ocdndns.com/WkSJQ58P859qzVvPH6bYaF/img/homepage-hero.jpg?user_id=123
 
 Redirect:
-http://flip.ocdndns.com/1234/567/link/landing-page?user_id=123
+http://flip.ocdndns.com/WkSJQ58P859qzVvPH6bYaF/link/search-url?user_id=123
 
 Track:
-http://flip.ocdndns.com/1234/567/track/purchase?user_id=123&revenue=123
+http://flip.ocdndns.com/WkSJQ58P859qzVvPH6bYaF/track/purchase?user_id=123&revenue=123
 
+var url = optimizelyClientInstance.getFeatureVariableString('search-url', 'url', userId);
 */
 /**
  * Fetch and log a given request object
  * @param {Request} request
  */
 async function handleRequest(request) {
+  console.log('Running flipper')
   console.log('Request', request)
 
   // Parse URL parameters
@@ -26,16 +30,16 @@ async function handleRequest(request) {
   // var value = url.searchParams.get("value")
   var attributes = {} // todo
   var path = url.pathname.split('/')
-  var accountId = path[1]
-  var projectId = path[2]
-  var mode = path[3]
-  var filename = path[4]
+  var datafileKey = path[1]
+  var mode = path[2]
+  var filename = path[3]
   var key = filename.split('.')[0]
   var extension = filename.split('.')[1]
 
   // Instantiate a client
   const optimizelySDK = loadOptimizely()
-  var datafileUrl = `https://cdn.optimizely.com/public/${accountId}/s/${projectId}_${projectId}.json`
+  var datafileUrl = `https://cdn.optimizely.com/datafiles/${datafileKey}.json`
+   // `https://cdn.optimizely.com/public/${accountId}/s/${projectId}_${projectId}.json`
   var datafile = await fetch(datafileUrl, {
     cf: { cacheTtl: 60 }
   }).then(r => r.json())
@@ -49,14 +53,19 @@ async function handleRequest(request) {
   
   // Get the variation
   
-  if (mode === 'link' || mode === 'img') {
-    var newUrl = optimizely.activate(experimentKey, userId, attributes)
-    // var newUrl = optimizely.getFeatureVariableString(featureKey, 'newUrl', userId)
+  if (mode === 'img' || mode === 'link') {
+    
+    // var newUrl = optimizely.activate(key, userId, attributes)
+    // var response = Response.redirect(newUrl, 307)
+    // console.log('Redirecting to', newUrl)
+  
+    var newUrl = optimizely.getFeatureVariableString(key, 'url', userId, attributes)
+    console.log('Redirecting to', newUrl)
     var response = Response.redirect(newUrl, 307)
 
   } else if (mode === 'track') {
     optimizely.track(key, userId, attributes)
-    var response = new Response('', {
+    var response = new Response(null, {
       status: 200
     })
   }
