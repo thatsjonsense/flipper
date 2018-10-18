@@ -50,10 +50,15 @@ async function handleRequest(request) {
   
   if (mode === 'img' || mode === 'link') {
     
+    // If only we could just use variation keys :/
     // var newUrl = optimizely.activate(key, userId, attributes)
     // var response = Response.redirect(newUrl, 307)
     // console.log('Redirecting to', newUrl)
-  
+    
+    // Force activation of the feature test
+    var enabled = optimizely.isFeatureEnabled(key, userId, attributes)
+    
+    // Get the URL to redirect to
     var newUrl = optimizely.getFeatureVariableString(key, 'url', userId, attributes)
     console.log('Redirecting to', newUrl)
     var response = Response.redirect(newUrl, 307)
