@@ -3,18 +3,11 @@ addEventListener('fetch', event => {
 })
 
 /*
-
+Image: http://flip.ocdndns.com/WkSJQ58P859qzVvPH6bYaF/img/logo.png?user_id=123
+Redirect: http://flip.ocdndns.com/WkSJQ58P859qzVvPH6bYaF/link/search-url?user_id=123
+Track: http://flip.ocdndns.com/WkSJQ58P859qzVvPH6bYaF/track/purchase?user_id=123&revenue=1234
+Datafile: 
 https://cdn.optimizely.com/datafiles/WkSJQ58P859qzVvPH6bYaF.json
-
-Image: http://flip.ocdndns.com/WkSJQ58P859qzVvPH6bYaF/img/homepage-hero.jpg?user_id=123
-
-Redirect:
-http://flip.ocdndns.com/WkSJQ58P859qzVvPH6bYaF/link/search-url?user_id=123
-
-Track:
-http://flip.ocdndns.com/WkSJQ58P859qzVvPH6bYaF/track/purchase?user_id=123&revenue=123
-
-var url = optimizelyClientInstance.getFeatureVariableString('search-url', 'url', userId);
 */
 /**
  * Fetch and log a given request object
@@ -27,8 +20,11 @@ async function handleRequest(request) {
   // Parse URL parameters
   var url = new URL(request.url)
   var userId = url.searchParams.get("user_id") || getOrSetUserId(request)
-  // var value = url.searchParams.get("value")
-  var attributes = {} // todo
+  var eventTags = {
+    'value': url.searchParams.get("value"),
+    'revenue': url.searchParams.get("revenue")
+  }
+  var attributes = url.searchParams
   var path = url.pathname.split('/')
   var datafileKey = path[1]
   var mode = path[2]
@@ -39,7 +35,6 @@ async function handleRequest(request) {
   // Instantiate a client
   const optimizelySDK = loadOptimizely()
   var datafileUrl = `https://cdn.optimizely.com/datafiles/${datafileKey}.json`
-   // `https://cdn.optimizely.com/public/${accountId}/s/${projectId}_${projectId}.json`
   var datafile = await fetch(datafileUrl, {
     cf: { cacheTtl: 60 }
   }).then(r => r.json())
@@ -64,7 +59,7 @@ async function handleRequest(request) {
     var response = Response.redirect(newUrl, 307)
 
   } else if (mode === 'track') {
-    optimizely.track(key, userId, attributes)
+    optimizely.track(key, userId, attributes, eventTags)
     var response = new Response(null, {
       status: 200
     })
